@@ -25,7 +25,7 @@ class FieldtypeAssistedURL extends FieldtypeURL {
     public static function getModuleInfo() {
         return [
             'title' => 'AssistedURL Field',
-            'version' => '2.0.1',
+            'version' => '2.0.2',
             'summary' => 'Field that stores an URL providing controls for selecting internal pages and files.',
             'author' => 'Marco Stoll, Adrian Jones',
             'installs' => 'InputfieldAssistedURL',
@@ -37,6 +37,17 @@ class FieldtypeAssistedURL extends FieldtypeURL {
      */
     public function init() {
         parent::init();
+    }
+
+    /**
+     * Allow bare fragment links (e.g. "#anchor") to pass through unchanged.
+     * The parent FieldtypeURL sanitizer would otherwise blank them.
+     */
+    public function sanitizeValue(Page $page, Field $field, $value) {
+        if(is_string($value) && preg_match('/^#[A-Za-z0-9\-_.:]+$/', $value)) {
+            return $value;
+        }
+        return parent::sanitizeValue($page, $field, $value);
     }
 
     /**
@@ -82,7 +93,7 @@ class FieldtypeAssistedURL extends FieldtypeURL {
                 $value = preg_replace('#^https?://#', '', $value);
             }
         }
-        if(strpos($value, '//') === false && strpos($value, 'mailto:') === false) {
+        if(strpos($value, '//') === false && strpos($value, 'mailto:') === false && strpos($value, '#') !== 0) {
             $urlParts = explode("?", $value);
 
             if($this->wire('config')->urls->root !== '/') {
